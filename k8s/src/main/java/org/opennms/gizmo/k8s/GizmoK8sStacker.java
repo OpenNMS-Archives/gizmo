@@ -21,6 +21,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -37,9 +39,6 @@ import com.google.common.collect.Lists;
 
 import io.fabric8.kubernetes.api.model.NamespaceBuilder;
 import io.fabric8.kubernetes.api.model.Pod;
-import io.fabric8.kubernetes.api.model.ReplicationController;
-import io.fabric8.kubernetes.api.model.Secret;
-import io.fabric8.kubernetes.api.model.Service;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.utils.URLUtils;
@@ -88,28 +87,8 @@ public class GizmoK8sStacker implements GizmoStacker<GizmoK8sStack> {
             stack(dependency);
         }
 
-        for (Secret secret : stack.getSecrets(this)) {
-            LOG.info("Creating secret: {}", secret);
-            kubernetes.secrets().inNamespace(namespace).create(secret);
-        }
-
-        for (Service svc : stack.getServices(this)) {
-            LOG.info("Creating service: {}", svc);
-            kubernetes.services().inNamespace(namespace).create(svc);
-        }
-
-        for (ReplicationController rc : stack.getReplicationControllers(this)) {
-            LOG.info("Creating replication controller: {}", rc);
-            kubernetes.replicationControllers().inNamespace(namespace).create(rc);
-        }
-
-        for (Pod pod : stack.getPods(this)) {
-            LOG.info("Creating pod: {}", pod);
-            kubernetes.pods().inNamespace(namespace).create(pod);
-        }
-
-        // TODO: Verify service and pod status'es before firing off the waiting rules
-        // i.e. avoid waiting for L7 check if application image cannot be found
+        // Create!
+        stack.create(this, kubernetes);
 
         for (Consumer<GizmoK8sStacker> waitingRule : stack.getWaitingRules()) {
             try {
@@ -163,6 +142,20 @@ public class GizmoK8sStacker implements GizmoStacker<GizmoK8sStack> {
     public List<Pod> getPodsWithLabel(String key, String value) {
         return kubernetes.pods().inNamespace(namespace).list().getItems().stream()
                 .filter(pod -> value.equals(pod.getMetadata().getLabels().get(key)))
+                .collect(Collectors.toList());
+    }
+
+    public List<Pod> getPodsWithLabels(Map<String, String> labels) {
+        return kubernetes.pods().inNamespace(namespace).list().getItems().stream()
+                .filter(p -> {
+                    final Map<String, String> podLabels = p.getMetadata().getLabels();
+                    for (Entry<String, String> label : labels.entrySet()) {
+                        if (!label.getValue().equals(podLabels.get(label.getKey()))) {
+                            return false;
+                        }
+                    }
+                    return true;
+                })
                 .collect(Collectors.toList());
     }
 

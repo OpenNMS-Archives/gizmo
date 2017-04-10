@@ -20,20 +20,11 @@ import java.util.function.Consumer;
 
 import org.opennms.gizmo.GizmoStack;
 
-import io.fabric8.kubernetes.api.model.Pod;
-import io.fabric8.kubernetes.api.model.ReplicationController;
-import io.fabric8.kubernetes.api.model.Secret;
-import io.fabric8.kubernetes.api.model.Service;
+import io.fabric8.kubernetes.client.KubernetesClient;
 
 public interface GizmoK8sStack extends GizmoStack<GizmoK8sStack, GizmoK8sStacker> {
 
-    List<Secret> getSecrets(GizmoK8sStacker stacker);
-
-    List<Service> getServices(GizmoK8sStacker stacker);
-
-    List<ReplicationController> getReplicationControllers(GizmoK8sStacker stacker);
-
-    List<Pod> getPods(GizmoK8sStacker stacker);
+    void create(GizmoK8sStacker stacker, KubernetesClient kubernetes);
 
     @Override
     List<Consumer<GizmoK8sStacker>> getWaitingRules();

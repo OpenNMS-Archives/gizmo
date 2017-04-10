@@ -22,41 +22,22 @@ import java.util.function.Consumer;
 import org.opennms.gizmo.k8s.GizmoK8sStack;
 import org.opennms.gizmo.k8s.GizmoK8sStacker;
 
-import io.fabric8.kubernetes.api.model.Pod;
-import io.fabric8.kubernetes.api.model.ReplicationController;
-import io.fabric8.kubernetes.api.model.Secret;
-import io.fabric8.kubernetes.api.model.Service;
+import io.fabric8.kubernetes.client.KubernetesClient;
 
 public class EmptyK8sStack implements GizmoK8sStack {
-
-    @Override
-    public List<Secret> getSecrets(GizmoK8sStacker stacker) {
-        return Collections.emptyList();
-    }
-
-    @Override
-    public List<Service> getServices(GizmoK8sStacker stacker) {
-        return Collections.emptyList();
-    }
-
-    @Override
-    public List<ReplicationController> getReplicationControllers(GizmoK8sStacker stacker) {
-        return Collections.emptyList();
-    }
-
-    @Override
-    public List<Pod> getPods(GizmoK8sStacker stacker) {
-        return Collections.emptyList();
-    }
-
-    @Override
-    public List<Consumer<GizmoK8sStacker>> getWaitingRules() {
-        return Collections.emptyList();
-    }
 
     @Override
     public List<GizmoK8sStack> getDependencies() {
         return Collections.emptyList();
     }
 
+    @Override
+    public void create(GizmoK8sStacker stacker, KubernetesClient kubernetes) {
+        // pass
+    }
+
+    @Override
+    public List<Consumer<GizmoK8sStacker>> getWaitingRules() {
+        return Collections.emptyList();
+    }
 }

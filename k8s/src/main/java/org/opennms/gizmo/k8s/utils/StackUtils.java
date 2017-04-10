@@ -31,6 +31,10 @@ public class StackUtils {
         LOG.info("Retrieving pods using selector {}={}", labelKey, labelValue);
         final List<Pod> pods = stacker.getPodsWithLabel(labelKey, labelValue);
         LOG.info("Found {} pods.", pods.size());
+        return getFirstRunningPod(pods);
+    }
+
+    public static Pod getFirstRunningPod(final List<Pod> pods) {
         if (pods.size() > 0) {
             for (Pod pod : pods) {
                 if (KubernetesHelper.isPodRunning(pod)) {
