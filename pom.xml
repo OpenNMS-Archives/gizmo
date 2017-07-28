@@ -3,7 +3,7 @@
     <groupId>org.opennms.gizmo</groupId>
     <artifactId>gizmo-parent</artifactId>
     <packaging>pom</packaging>
-    <version>1.0.0</version>
+    <version>1.0.1-SNAPSHOT</version>
     <name>Gizmo</name>
     <url>https://github.com/OpenNMS/gizmo</url>
     <description>End-to-end testing with JUnit and Docker</description>
@@ -18,7 +18,7 @@
     <scm>
         <url>https://github.com/OpenNMS/gizmo</url>
         <connection>scm:git:git@github.com:OpenNMS/gizmo.git</connection>
-        <tag>v1.0.0</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <developers>
