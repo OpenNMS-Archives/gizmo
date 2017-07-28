@@ -15,6 +15,21 @@
  */
 package org.opennms.gizmo.docker;
 
+import com.google.common.base.Throwables;
+import com.spotify.docker.client.DefaultDockerClient;
+import com.spotify.docker.client.DockerClient;
+import com.spotify.docker.client.exceptions.DockerCertificateException;
+import com.spotify.docker.client.exceptions.DockerException;
+import com.spotify.docker.client.exceptions.ImageNotFoundException;
+import com.spotify.docker.client.messages.Container;
+import com.spotify.docker.client.messages.ContainerConfig;
+import com.spotify.docker.client.messages.ContainerCreation;
+import com.spotify.docker.client.messages.ContainerInfo;
+import com.spotify.docker.client.messages.PortBinding;
+import org.opennms.gizmo.GizmoStacker;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
@@ -22,30 +37,17 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
-
-import org.opennms.gizmo.GizmoStacker;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Throwables;
-import com.spotify.docker.client.DefaultDockerClient;
-import com.spotify.docker.client.DockerClient;
-import com.spotify.docker.client.exceptions.DockerCertificateException;
-import com.spotify.docker.client.exceptions.DockerException;
-import com.spotify.docker.client.exceptions.ImageNotFoundException;
-import com.spotify.docker.client.messages.ContainerConfig;
-import com.spotify.docker.client.messages.ContainerCreation;
-import com.spotify.docker.client.messages.ContainerInfo;
-import com.spotify.docker.client.messages.PortBinding;
 
 public class GizmoDockerStacker implements GizmoStacker<GizmoDockerStack> {
     private static final Logger LOG = LoggerFactory.getLogger(GizmoDockerStacker.class);
 
     private DockerClient docker;
     private final boolean skipPull;
+    private final boolean useExistingStacks;
 
     /**
      * Keeps track of the IDs for all the created containers so we can
@@ -61,6 +63,7 @@ public class GizmoDockerStacker implements GizmoStacker<GizmoDockerStack> {
     public GizmoDockerStacker(GizmoDockerRuleBuilder builder) {
         docker = builder.docker;
         skipPull = builder.skipPull;
+        useExistingStacks = builder.useExistingStacks;
     }
 
     @Override
@@ -73,6 +76,13 @@ public class GizmoDockerStacker implements GizmoStacker<GizmoDockerStack> {
 
     @Override
     public void stack(GizmoDockerStack stack) throws DockerException, InterruptedException {
+        for (GizmoDockerStack dependency : stack.getDependencies()) {
+            LOG.info("Stacking dependency: {}", dependency);
+            stack(dependency);
+        }
+
+        stack.beforeStack(this);
+
         for (Entry<String, Function<GizmoDockerStacker, ContainerConfig>> entry : stack.getContainersByAlias().entrySet()) {
             final String alias = entry.getKey();
             final Function<GizmoDockerStacker, ContainerConfig> containerFunc = entry.getValue();
@@ -89,11 +99,21 @@ public class GizmoDockerStacker implements GizmoStacker<GizmoDockerStack> {
                 }
             }
 
-            final ContainerCreation containerCreation = docker.createContainer(container);
-            final String containerId = containerCreation.id();
-            createdContainerIds.add(containerId);
+            final String containerId;
+            if (!useExistingStacks) {
+                final ContainerCreation containerCreation = docker.createContainer(container);
+                containerId = containerCreation.id();
+                createdContainerIds.add(containerId);
 
-            docker.startContainer(containerId);
+                docker.startContainer(containerId);
+            } else {
+                containerId = docker.listContainers(DockerClient.ListContainersParam.withStatusRunning()).stream()
+                        .filter(c -> Objects.equals(container.image(), c.image()))
+                        .findFirst()
+                        .orElseThrow(() -> new IllegalStateException("Could not find runnign container with image: "
+                                + container.image()))
+                        .id();
+            }
 
             final ContainerInfo containerInfo = docker.inspectContainer(containerId);
             LOG.info("{} has container id: {}", alias, containerId);
@@ -114,6 +134,8 @@ public class GizmoDockerStacker implements GizmoStacker<GizmoDockerStack> {
                 throw Throwables.propagate(t);
             }
         }
+
+        stack.afterStack(this);
     }
 
     @Override
@@ -121,9 +143,15 @@ public class GizmoDockerStacker implements GizmoStacker<GizmoDockerStack> {
         // Kill and remove all of the containers we created
         for (String containerId : createdContainerIds) {
             try {
-                LOG.info("Killing and removing container with id: {}", containerId);
+                LOG.info("Killing container with id: {}", containerId);
                 docker.killContainer(containerId);
-                docker.removeContainer(containerId);
+                try {
+                    LOG.info("Removing container with id: {}", containerId);
+                    docker.removeContainer(containerId);
+                } catch (Throwable t) {
+                    // If autoremove is set, removeContainer will throw an NPE
+                    LOG.info("Failed to remove container with id: {}. The container is likely already be removed.", containerId);
+                }
             } catch (DockerException | InterruptedException e) {
                 LOG.error("Failed to kill and/or remove container with id: {}", containerId, e);
             }
@@ -167,5 +195,9 @@ public class GizmoDockerStacker implements GizmoStacker<GizmoDockerStack> {
         }
 
         docker.close();
+    }
+
+    protected DockerClient getDocker() {
+        return docker;
     }
 }

@@ -43,4 +43,14 @@ public class EmptyDockerStack implements GizmoDockerStack {
         return Collections.emptyList();
     }
 
+    @Override
+    public void beforeStack(GizmoDockerStacker stacker) {
+        // pass
+    }
+
+    @Override
+    public void afterStack(GizmoDockerStacker stacker) {
+        // pass
+    }
+
 }

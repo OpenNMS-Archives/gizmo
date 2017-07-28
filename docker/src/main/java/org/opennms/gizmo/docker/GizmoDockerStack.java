@@ -31,4 +31,8 @@ public interface GizmoDockerStack extends GizmoStack<GizmoDockerStack, GizmoDock
     @Override
     List<Consumer<GizmoDockerStacker>> getWaitingRules();
 
+    void beforeStack(GizmoDockerStacker stacker);
+
+    void afterStack(GizmoDockerStacker stacker);
+
 }

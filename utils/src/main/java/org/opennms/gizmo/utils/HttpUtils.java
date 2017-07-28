@@ -17,6 +17,8 @@ package org.opennms.gizmo.utils;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,11 +31,19 @@ import okhttp3.Response;
 public class HttpUtils {
     private static final Logger LOG = LoggerFactory.getLogger(HttpUtils.class);
 
-    public static String get(InetSocketAddress httpAddr, String url) throws IOException {
-        return get(httpAddr, null, null, url);
+    public static URL toHttpUrl(InetSocketAddress addr) {
+        try {
+            return new URL(String.format("http://%s:%d/", addr.getHostString(), addr.getPort()));
+        } catch (MalformedURLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public static String get(InetSocketAddress httpAddr, String username, String password, String url) throws IOException {
+    public static String get(InetSocketAddress httpAddr, String path) throws IOException {
+        return get(httpAddr, null, null, path);
+    }
+
+    public static String get(InetSocketAddress httpAddr, String username, String password, String path) throws IOException {
         try {
             final OkHttpClient client = new OkHttpClient();
             Request.Builder builder = new Request.Builder();
@@ -41,7 +51,7 @@ public class HttpUtils {
                 builder.header("Authorization", Credentials.basic(username, password));
             }
             Request request = builder.url(String.format("http://%s:%d%s",
-                    httpAddr.getHostString(), httpAddr.getPort(), url))
+                    httpAddr.getHostString(), httpAddr.getPort(), path))
                 .build();
             LOG.info("Calling URL: {}", request.url());
             Response response = client.newCall(request).execute();

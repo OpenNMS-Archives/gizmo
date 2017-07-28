@@ -50,20 +50,20 @@ public class NginxDockerInlineStackIT {
 
     @Rule
     public GizmoDockerRule gizmo = GizmoDockerRule.builder()
-        .withContainer(NGINX_ALIAS, (stacker) -> {
-           return ContainerConfig.builder()
-                   .image("nginx:1.11.1-alpine")
-                   .hostConfig(HostConfig.builder()
-                    .publishAllPorts(true)
-                    .build())
-                   .build();
-        })
+        .withContainer(NGINX_ALIAS, (stacker) -> ContainerConfig.builder()
+                .image("nginx:1.11.1-alpine")
+                .hostConfig(HostConfig.builder()
+                        .publishAllPorts(true)
+                        .autoRemove(true)
+                        .build())
+                .build())
         .withWaitingRule((stacker) -> {
             // When the container ports are bound to random host ports
             // you can use this call to determine the effective address of the service
             final InetSocketAddress httpAddr = stacker.getServiceAddress(NGINX_ALIAS, 80);
-            await().atMost(2, MINUTES).pollInterval(5, SECONDS).pollDelay(0, SECONDS)
-                .until(() -> HttpUtils.get(httpAddr, "/") != null);
+            await().atMost(2, MINUTES)
+                    .pollInterval(5, SECONDS).pollDelay(0, SECONDS)
+                    .until(() -> HttpUtils.get(httpAddr, "/") != null);
         }).build();
 
     @Test

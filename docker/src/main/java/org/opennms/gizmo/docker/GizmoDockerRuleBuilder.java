@@ -36,6 +36,7 @@ public class GizmoDockerRuleBuilder {
     protected boolean skipPull = false;
     protected boolean skipTearDown = false;
     protected boolean skipTearDownOnFailure = false;
+    protected boolean useExistingStacks = false;
     protected List<GizmoDockerStack> stacks = new LinkedList<>();
 
     public GizmoDockerRuleBuilder withDockerClient(DockerClient docker) {
@@ -68,6 +69,16 @@ public class GizmoDockerRuleBuilder {
         return this;
     }
 
+    public GizmoDockerRuleBuilder skipTearDownOnFailure(boolean skipTearDownOnFailure) {
+        this.skipTearDownOnFailure = skipTearDownOnFailure;
+        return this;
+    }
+
+    public GizmoDockerRuleBuilder useExistingStacks(boolean useExistingStacks) {
+        this.useExistingStacks = useExistingStacks;
+        return this;
+    }
+
     public GizmoDockerRule build() {
         if (containersByAlias.size() > 0) {
             final Map<String, Function<GizmoDockerStacker, ContainerConfig>> containers = ImmutableMap.copyOf(containersByAlias);
@@ -86,6 +97,16 @@ public class GizmoDockerRuleBuilder {
                 @Override
                 public List<Consumer<GizmoDockerStacker>> getWaitingRules() {
                     return rules;
+                }
+
+                @Override
+                public void beforeStack(GizmoDockerStacker stacker) {
+                    // pass
+                }
+
+                @Override
+                public void afterStack(GizmoDockerStacker stacker) {
+                    // pass
                 }
             });
         }
