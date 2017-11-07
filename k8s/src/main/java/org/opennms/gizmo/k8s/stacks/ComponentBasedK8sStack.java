@@ -19,6 +19,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
+import io.fabric8.kubernetes.api.model.ConfigMap;
+import io.fabric8.kubernetes.api.model.extensions.Deployment;
+import io.fabric8.kubernetes.api.model.extensions.StatefulSet;
+import io.fabric8.openshift.api.model.Policy;
 import org.opennms.gizmo.k8s.GizmoK8sStack;
 import org.opennms.gizmo.k8s.GizmoK8sStacker;
 import org.slf4j.Logger;
@@ -40,9 +44,24 @@ public class ComponentBasedK8sStack extends EmptyK8sStack {
             kubernetes.secrets().inNamespace(stacker.getNamespace()).create(secret);
         }
 
+        for (ConfigMap configMap : getConfigMaps(stacker)) {
+            LOG.info("Creating config map: {}", configMap);
+            kubernetes.configMaps().inNamespace(stacker.getNamespace()).create(configMap);
+        }
+
         for (Service svc : getServices(stacker)) {
             LOG.info("Creating service: {}", svc);
             kubernetes.services().inNamespace(stacker.getNamespace()).create(svc);
+        }
+
+        for (StatefulSet statefulSet : getStatefulSets(stacker)) {
+            LOG.info("Creating stateful sets: {}", statefulSet);
+            kubernetes.apps().statefulSets().inNamespace(stacker.getNamespace()).create(statefulSet);
+        }
+
+        for (Deployment deployment : getDeployments(stacker)) {
+            LOG.info("Creating deployment: {}", deployment);
+            kubernetes.extensions().deployments().inNamespace(stacker.getNamespace()).create(deployment);
         }
 
         for (ReplicationController rc : getReplicationControllers(stacker)) {
@@ -63,7 +82,15 @@ public class ComponentBasedK8sStack extends EmptyK8sStack {
         return Collections.emptyList();
     }
 
+    public List<ConfigMap> getConfigMaps(GizmoK8sStacker stacker) { return Collections.emptyList(); }
+
     public List<Service> getServices(GizmoK8sStacker stacker) {
+        return Collections.emptyList();
+    }
+
+    public List<StatefulSet> getStatefulSets(GizmoK8sStacker stacker) { return Collections.emptyList(); }
+
+    public List<Deployment> getDeployments(GizmoK8sStacker stacker) {
         return Collections.emptyList();
     }
 

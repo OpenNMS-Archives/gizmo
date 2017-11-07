@@ -48,8 +48,8 @@
         <jinjava.version>2.1.16</jinjava.version>
         <jsch.version>0.1.54</jsch.version>
         <junit.version>4.12</junit.version>
-        <kubernetes-client.version>2.2.13</kubernetes-client.version>
-        <kubernetes-api.version>2.2.209</kubernetes-api.version>
+        <kubernetes-client.version>3.0.3</kubernetes-client.version>
+        <kubernetes-api.version>3.0.8</kubernetes-api.version>
         <log4j.version>2.8.2</log4j.version>
         <okhttp.version>3.6.0</okhttp.version>
         <slf4j-api.version>1.7.25</slf4j-api.version>

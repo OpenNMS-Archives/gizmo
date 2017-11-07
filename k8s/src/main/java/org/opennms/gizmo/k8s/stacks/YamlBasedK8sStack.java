@@ -26,6 +26,9 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import io.fabric8.kubernetes.api.model.ConfigMap;
+import io.fabric8.kubernetes.api.model.extensions.Deployment;
+import io.fabric8.kubernetes.api.model.extensions.StatefulSet;
 import org.opennms.gizmo.k8s.GizmoK8sStack;
 import org.opennms.gizmo.k8s.GizmoK8sStacker;
 import org.slf4j.Logger;
@@ -90,6 +93,7 @@ public class YamlBasedK8sStack extends ComponentBasedK8sStack {
         return new ByteArrayInputStream(renderedDoc.getBytes());
     }
 
+    @Override
     public List<Secret> getSecrets(GizmoK8sStacker stacker) {
         final KubernetesClient client = stacker.getClient();
         return documentsByKind.get("secret").stream()
@@ -97,13 +101,39 @@ public class YamlBasedK8sStack extends ComponentBasedK8sStack {
             .collect(Collectors.toList());
     }
 
+    @Override
+    public List<ConfigMap> getConfigMaps(GizmoK8sStacker stacker) {
+        final KubernetesClient client = stacker.getClient();
+        return documentsByKind.get("configmap").stream()
+                .map(doc -> client.configMaps().load(maybeApplyTemplating(stacker, doc)).get())
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public List<Service> getServices(GizmoK8sStacker stacker) {
         final KubernetesClient client = stacker.getClient();
         return documentsByKind.get("service").stream()
-            .map(doc -> client.services().load(maybeApplyTemplating(stacker, doc)).get())
-            .collect(Collectors.toList());
+                .map(doc -> client.services().load(maybeApplyTemplating(stacker, doc)).get())
+                .collect(Collectors.toList());
     }
 
+    @Override
+    public List<StatefulSet> getStatefulSets(GizmoK8sStacker stacker) {
+        final KubernetesClient client = stacker.getClient();
+        return documentsByKind.get("statefulset").stream()
+                .map(doc -> client.apps().statefulSets().load(maybeApplyTemplating(stacker, doc)).get())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Deployment> getDeployments(GizmoK8sStacker stacker) {
+        final KubernetesClient client = stacker.getClient();
+        return documentsByKind.get("deployment").stream()
+                .map(doc -> client.extensions().deployments().load(maybeApplyTemplating(stacker, doc)).get())
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public List<ReplicationController> getReplicationControllers(GizmoK8sStacker stacker) {
         final KubernetesClient client = stacker.getClient();
         return documentsByKind.get("replicationcontroller").stream()
@@ -111,6 +141,7 @@ public class YamlBasedK8sStack extends ComponentBasedK8sStack {
             .collect(Collectors.toList());
     }
 
+    @Override
     public List<Pod> getPods(GizmoK8sStacker stacker) {
         final KubernetesClient client = stacker.getClient();
         return documentsByKind.get("pod").stream()
