@@ -18,7 +18,7 @@ import com.google.common.collect.ImmutableMap;
 public class HelmUtils {
 
     private static boolean isTillerRunning(final GizmoK8sStacker stacker) {
-        return StackUtils.getFirstRunningPod(
+        return StackUtils.getFirstReadyPod(
                 stacker.getPodsWithLabels(ImmutableMap.of(
                         "app", "helm",
                         "name", "tiller"))) != null;

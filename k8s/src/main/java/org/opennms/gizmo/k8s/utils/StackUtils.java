@@ -27,22 +27,22 @@ import io.fabric8.kubernetes.api.model.Pod;
 public class StackUtils {
     private static final Logger LOG = LoggerFactory.getLogger(StackUtils.class);
 
-    public static Pod getFirstRunningPod(final GizmoK8sStacker stacker, final String labelKey, final String labelValue) {
+    public static Pod getFirstReadyPod(final GizmoK8sStacker stacker, final String labelKey, final String labelValue) {
         LOG.info("Retrieving pods using selector {}={}", labelKey, labelValue);
         final List<Pod> pods = stacker.getPodsWithLabel(labelKey, labelValue);
         LOG.info("Found {} pods.", pods.size());
-        return getFirstRunningPod(pods);
+        return getFirstReadyPod(pods);
     }
 
-    public static Pod getFirstRunningPod(final List<Pod> pods) {
+    public static Pod getFirstReadyPod(final List<Pod> pods) {
         if (pods.size() > 0) {
             for (Pod pod : pods) {
-                if (KubernetesHelper.isPodRunning(pod)) {
-                    LOG.info("{} is running.", pod.getMetadata().getName());
+                if (KubernetesHelper.isPodReady(pod)) {
+                    LOG.info("{} is ready.", pod.getMetadata().getName());
                     return pod;
                 }
             }
-            LOG.info("None of the pods are running.");
+            LOG.info("None of the pods are ready.");
         }
         return null;
     }
