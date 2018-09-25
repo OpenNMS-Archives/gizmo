@@ -28,7 +28,10 @@ import org.junit.runners.model.Statement;
  * @author jwhite
  */
 public abstract class ExternalResourceRule implements TestRule {
+    private Description description;
+
     public Statement apply(Statement base, Description description) {
+        this.description = description;
         return statement(base);
     }
 
@@ -64,5 +67,9 @@ public abstract class ExternalResourceRule implements TestRule {
      */
     protected void after(boolean didFail) {
         // do nothing
+    }
+
+    public Description getDescription() {
+        return description;
     }
 }
