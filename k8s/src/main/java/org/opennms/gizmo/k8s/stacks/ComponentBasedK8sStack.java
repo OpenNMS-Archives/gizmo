@@ -19,19 +19,18 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
-import io.fabric8.kubernetes.api.model.ConfigMap;
-import io.fabric8.kubernetes.api.model.extensions.Deployment;
-import io.fabric8.kubernetes.api.model.extensions.StatefulSet;
-import io.fabric8.openshift.api.model.Policy;
 import org.opennms.gizmo.k8s.GizmoK8sStack;
 import org.opennms.gizmo.k8s.GizmoK8sStacker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.ReplicationController;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.Service;
+import io.fabric8.kubernetes.api.model.apps.Deployment;
+import io.fabric8.kubernetes.api.model.apps.StatefulSet;
 import io.fabric8.kubernetes.client.KubernetesClient;
 
 public class ComponentBasedK8sStack extends EmptyK8sStack {
